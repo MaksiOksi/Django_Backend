@@ -7,12 +7,25 @@ from store.serializers import BookSerializer
 
 
 class BooksApiTestCase(APITestCase):
+    def setUp(self):
+        self.book_1 = Book.objects.create(name='Test book 1', price=25.2,
+                                          author_name='author1')
+        self.book_2 = Book.objects.create(name='Test book 2', price=25.67,
+                                          author_name='author4')
+        self.book_3 = Book.objects.create(name='Test book author1', price=25.67,
+                                          author_name='author2')
+
     def test_get(self):
-        book_1 = Book.objects.create(name='Test book 1', price=25.2)
-        book_2 = Book.objects.create(name='Test book 2', price=25.67)
         # For getting a list url instead
         url = reverse('book-list')
         response = self.client.get(url)
+        serializer_data = BookSerializer([self.book_1, self.book_2, self.book_3], many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        serializer_data = BookSerializer([book_1, book_2], many=True).data
+        self.assertEqual(serializer_data, response.data)
+
+    def test_get_search(self):
+        url = reverse('book-list')
+        response = self.client.get(url, data={'search': 'author1'})
+        serializer_data = BookSerializer([self.book_1,self.book_3], many=True).data
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
